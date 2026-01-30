@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smaal Proxy V4 - Tabbed Edition</title>
+    <style>
+        :root { --bg: #121212; --nav: #1e1e1e; --accent: #007bff; --text: white; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* Tab Bar */
+        #tab-bar { display: flex; background: #000; padding: 5px 5px 0 5px; gap: 5px; overflow-x: auto; }
+        .tab { padding: 8px 15px; background: #333; border-radius: 8px 8px 0 0; cursor: pointer; min-width: 100px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .tab.active { background: var(--nav); color: var(--accent); font-weight: bold; }
+        .close-tab { margin-left: 10px; color: #888; }
+        .close-tab:hover { color: red; }
+        #new-tab-btn { padding: 5px 12px; cursor: pointer; color: #888; font-size: 20px; }
+
+        /* Navigation */
+        #nav { padding: 10px; background: var(--nav); display: flex; gap: 10px; align-items: center; }
+        input { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white; outline: none; }
+        
+        /* Content Area */
+        #viewer-container { flex: 1; background: white; color: black; position: relative; overflow: hidden; }
+        .tab-content { width: 100%; height: 100%; overflow: auto; display: none; position: absolute; top: 0; left: 0; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="tab-bar">
+        <div id="new-tab-btn" onclick="createNewTab()">+</div>
+    </div>
+
+    <div id="nav">
+        <button onclick="goBack()">←</button>
+        <input type="text" id="urlInput" placeholder="Search or enter URL...">
+        <button id="surfBtn">Surf</button>
+    </div>
+
+    <div id="viewer-container">
+        </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
