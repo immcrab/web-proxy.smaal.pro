@@ -3,134 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smaal Proxy V4 - Tabbed Edition</title>
+    <title>SmaalWeb Proxy</title>
     <style>
-        :root { --bg: #121212; --nav: #1e1e1e; --accent: #007bff; --text: white; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Tab Bar */
-        #tab-bar { display: flex; background: #000; padding: 5px 5px 0 5px; gap: 5px; overflow-x: auto; align-items: flex-end; border-bottom: 1px solid #333; }
-        .tab { padding: 8px 15px; background: #333; border-radius: 8px 8px 0 0; cursor: pointer; min-width: 120px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; transition: 0.2s; border: 1px solid #222; border-bottom: none; color: #ccc; }
-        .tab.active { background: var(--nav); color: var(--accent); font-weight: bold; border-top: 2px solid var(--accent); }
-        .close-tab { margin-left: 10px; color: #888; font-weight: bold; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-        .close-tab:hover { background: #ff4d4d; color: white; }
-        #new-tab-btn { padding: 5px 15px; cursor: pointer; color: var(--accent); font-size: 24px; line-height: 1; }
+        :root {
+            --bg: #0a0a0a;
+            --nav: #151515;
+            --accent: #007bff;
+            --text: #ffffff;
+            --card: #1e1e1e;
+            --tab-inactive: #111;
+        }
 
-        /* Navigation */
-        #nav { padding: 10px; background: var(--nav); display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #333; }
-        #nav button { background: #333; border: none; color: white; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        #nav button:hover { background: #444; }
-        input { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white; outline: none; }
-        input:focus { border-color: var(--accent); }
-        #surfBtn { background: var(--accent) !important; font-weight: bold; padding: 8px 20px !important; }
-        
-        /* Content Area */
-        #viewer-container { flex: 1; background: white; position: relative; overflow: hidden; }
-        .tab-content { width: 100%; height: 100%; border: none; display: none; position: absolute; top: 0; left: 0; }
-        .tab-content.active { display: block; }
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Fixed UI Components - These will NEVER be overwritten */
+        #ui-wrapper {
+            display: flex;
+            flex-direction: column;
+            z-index: 9999; /* Keeps UI on top */
+            background: var(--bg);
+        }
+
+        #tab-bar {
+            display: flex;
+            background: #000;
+            padding: 5px 5px 0 5px;
+            gap: 4px;
+            height: 40px;
+            align-items: flex-end;
+            border-bottom: 1px solid #222;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            background: var(--tab-inactive);
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            min-width: 100px;
+            font-size: 12px;
+            color: #888;
+            border: 1px solid #222;
+            border-bottom: none;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .tab.active {
+            background: var(--nav);
+            color: var(--accent);
+            border-top: 2px solid var(--accent);
+        }
+
+        #nav {
+            padding: 10px;
+            background: var(--nav);
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid #222;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #0a0a0a;
+            color: white;
+            outline: none;
+        }
+
+        button#surfBtn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Viewport Logic */
+        #viewer-container {
+            flex: 1;
+            background: #fff;
+            position: relative;
+            overflow: hidden; 
+        }
+
+        .tab-content {
+            width: 100%;
+            height: 100%;
+            display: none;
+            overflow: auto; /* Allow the proxied site to scroll internally */
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Home Screen Styles */
+        .home-screen {
+            background: var(--bg);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .prefabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+            width: 90%;
+            max-width: 700px;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 1px solid #333;
+            text-align: center;
+        }
+
+        .card:hover { border-color: var(--accent); background: #222; }
     </style>
 </head>
 <body>
 
-    <div id="tab-bar">
-        <div id="new-tab-btn" onclick="createNewTab()">+</div>
-    </div>
+    <div id="ui-wrapper">
+        <div id="tab-bar">
+            <div id="new-tab-btn" onclick="createNewTab()" style="padding: 10px; color: var(--accent); cursor:pointer;">+</div>
+        </div>
 
-    <div id="nav">
-        <button onclick="goBack()">←</button>
-        <button onclick="refresh()">↻</button>
-        <input type="text" id="urlInput" placeholder="Enter URL to proxy...">
-        <button id="surfBtn" onclick="handleSurf()">Surf</button>
+        <div id="nav">
+            <input type="text" id="urlInput" placeholder="Enter URL...">
+            <button id="surfBtn" onclick="handleSurf()">Surf</button>
+        </div>
     </div>
 
     <div id="viewer-container"></div>
 
     <script>
-        let tabCount = 0;
-        const proxyBase = "https://api.web-proxy.smaal.pro/api-base";
+    let tabs = [];
+    let activeTabId = null;
+    // Fast reliable proxy base
+    const proxyBase = "https://corsproxy.io/?"; 
 
-        function createNewTab() {
-            tabCount++;
-            const tabId = `tab-${tabCount}`;
-            
-            const tabBtn = document.createElement('div');
-            tabBtn.className = 'tab';
-            tabBtn.id = `btn-${tabId}`;
-            tabBtn.innerHTML = `
-                <span>New Tab</span>
-                <span class="close-tab" onclick="closeTab('${tabId}', event)">×</span>
-            `;
-            tabBtn.onclick = () => switchTab(tabId);
-            
-            const tabBar = document.getElementById('tab-bar');
-            tabBar.insertBefore(tabBtn, document.getElementById('new-tab-btn'));
+    const homeHTML = `
+        <div class="home-screen">
+            <h1 style="font-size: 4rem; margin: 0;">Smaal<span style="color:var(--accent)">Web</span></h1>
+            <div class="prefabs">
+                <div class="card" onclick="quickLaunch('google.com')"><b>Google</b></div>
+                <div class="card" onclick="quickLaunch('youtube.com')"><b>YouTube</b></div>
+                <div class="card" onclick="quickLaunch('ballsack.gmsgroup.app')"><b>GMS Group</b></div>
+                <div class="card" onclick="quickLaunch('discord.com')"><b>Discord</b></div>
+                <div class="card" onclick="quickLaunch('github.com')"><b>GitHub</b></div>
+                <div class="card" onclick="quickLaunch('wikipedia.org')"><b>Wikipedia</b></div>
+                <div class="card" onclick="quickLaunch('unblocked-games.s3.amazonaws.com/index.html')"><b>Unblocked Games</b></div>
+            </div>
+        </div>
+    `;
 
-            const iframe = document.createElement('iframe');
-            iframe.className = 'tab-content';
-            iframe.id = tabId;
-            // Set the default source to your proxy API
-            iframe.src = proxyBase; 
-            
-            document.getElementById('viewer-container').appendChild(iframe);
-            switchTab(tabId);
-        }
+    function createNewTab() {
+        const id = Date.now();
+        tabs.push({ id, url: "" });
+        const tabEl = document.createElement('div');
+        tabEl.className = 'tab';
+        tabEl.id = `tab-${id}`;
+        tabEl.innerHTML = `<span class="title">Home</span><span class="close-x" onclick="closeTab(event, ${id})">×</span>`;
+        tabEl.onclick = () => switchTab(id);
+        document.getElementById('tab-bar').insertBefore(tabEl, document.getElementById('new-tab-btn'));
+        const contentEl = document.createElement('div');
+        contentEl.className = 'tab-content';
+        contentEl.id = `content-${id}`;
+        contentEl.innerHTML = homeHTML;
+        document.getElementById('viewer-container').appendChild(contentEl);
+        switchTab(id);
+    }
 
-        function switchTab(id) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            document.getElementById(id).classList.add('active');
-            document.getElementById(`btn-${id}`).classList.add('active');
-            
-            const activeIframe = document.getElementById(id);
-            // Clean up the URL in the address bar for the user
-            document.getElementById('urlInput').value = activeIframe.src === proxyBase ? "" : activeIframe.src;
-        }
+    async function launch(target, id) {
+    if (!target) return;
+    
+    // Check if the input is a URL or a search phrase
+    const isUrl = target.includes('.') && !target.includes(' ');
+    
+    if (isUrl) {
+        if (!target.startsWith('http')) target = 'https://' + target;
+    } else {
+        // It's a search phrase! Send it to DuckDuckGo
+        target = `https://duckduckgo.com/?q=${encodeURIComponent(target)}`;
+    }
 
-        function handleSurf() {
-            const input = document.getElementById('urlInput').value;
-            const activeIframe = document.querySelector('.tab-content.active');
-            
-            if (activeIframe && input) {
-                let targetUrl = input;
-                // Basic URL fixing
-                if (!targetUrl.startsWith('http')) targetUrl = 'https://' + targetUrl;
-                
-                // Navigate the iframe to the proxy endpoint + the target
-                // Note: Depending on how your API is set up, you might need 
-                // to use: proxyBase + "?url=" + targetUrl
-                activeIframe.src = proxyBase + targetUrl;
-                
-                // Update tab title
-                const activeBtn = document.querySelector('.tab.active span');
-                activeBtn.innerText = targetUrl.replace('https://', '').split('/')[0];
-            }
-        }
+    const currentTab = tabs.find(t => t.id === id);
+    currentTab.url = target;
+    const container = document.getElementById(`content-${id}`);
+    container.innerHTML = `<div style="padding:20px; color:#333; background:white; height:100%;">🚀 Surfing to ${target}...</div>`;
 
-        function closeTab(id, event) {
-            event.stopPropagation();
-            document.getElementById(`btn-${id}`).remove();
-            document.getElementById(id).remove();
-            const tabs = document.querySelectorAll('.tab');
-            if (tabs.length > 0) switchTab(tabs[tabs.length - 1].id.replace('btn-', ''));
-        }
+    try {
+        const response = await fetch(proxyBase + encodeURIComponent(target));
+        const html = await response.text();
+        const urlObj = new URL(target);
+        const base = urlObj.origin;
 
-        document.getElementById('urlInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleSurf();
+        let rewritten = html.replace(/(src|href|action)="(?!http|data|#|javascript)([^"]+)"/g, (m, attr, path) => {
+            return `${attr}="${path.startsWith('/') ? base + path : base + '/' + path}"`;
+        }).replace(/url\(['"]?(?!http|data|#)([^'"]+)['"]?\)/g, (m, path) => {
+            return `url("${path.startsWith('/') ? base + path : base + '/' + path}")`;
         });
 
-        function goBack() { 
-            const activeIframe = document.querySelector('.tab-content.active');
-            if(activeIframe) activeIframe.contentWindow.history.back(); 
-        }
+        const baseTag = `<base href="${base}/">`;
+        let shadow = container.shadowRoot || container.attachShadow({mode: 'open'});
+        shadow.innerHTML = `<style>body{background:white; color:black; margin:0;}</style>` + baseTag + rewritten;
+        
+        document.getElementById(`tab-${id}`).querySelector('.title').innerText = urlObj.hostname;
 
-        function refresh() {
-            const activeIframe = document.querySelector('.tab-content.active');
-            if(activeIframe) activeIframe.src = activeIframe.src;
-        }
+        shadow.querySelectorAll('a').forEach(link => {
+            link.onclick = (e) => {
+                const href = link.getAttribute('href');
+                if (href && !href.startsWith('#')) {
+                    e.preventDefault();
+                    document.getElementById('urlInput').value = link.href;
+                    launch(link.href, id);
+                }
+            };
+        });
+    } catch (e) { 
+        container.innerHTML = `<div style="color:red; padding:20px; background:white; height:100%;">Error loading: ${target}</div>`; 
+    }
+}
 
-        // Initialize first tab
-        createNewTab();
-    </script>
+function handleSurf() {
+    const input = document.getElementById('urlInput').value.trim();
+    if (input) {
+        launcah(input, activeTabId);
+    }
+}
+
+    function switchTab(id) {
+        activeTabId = id;
+        document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(`tab-${id}`).classList.add('active');
+        document.getElementById(`content-${id}`).classList.add('active');
+        const currentTab = tabs.find(t => t.id === id);
+        document.getElementById('urlInput').value = currentTab.url;
+    }
+
+    function quickLaunch(url) { launch(url, activeTabId); }
+    function handleSurf() { launch(document.getElementById('urlInput').value, activeTabId); }
+    function closeTab(e, id) { e.stopPropagation(); document.getElementById(`tab-${id}`).remove(); document.getElementById(`content-${id}`).remove(); tabs = tabs.filter(t => t.id !== id); if(tabs.length > 0) switchTab(tabs[0].id); else createNewTab(); }
+    
+    document.getElementById('urlInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSurf(); });
+    createNewTab();
+</script>
 </body>
 </html>
